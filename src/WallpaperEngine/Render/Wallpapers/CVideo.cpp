@@ -32,7 +32,7 @@ CVideo::CVideo (
     mpv_set_option_string (this->m_mpv, "msg-level", "all=v");
     mpv_set_option_string (this->m_mpv, "input-cursor", "no");
     mpv_set_option_string (this->m_mpv, "cursor-autohide", "no");
-    mpv_set_option_string (this->m_mpv, "config", "no");
+    mpv_set_option_string (this->m_mpv, "config", "yes");
     mpv_set_option_string (this->m_mpv, "fbo-format", "rgba8");
     mpv_set_option_string (this->m_mpv, "vo", "libmpv");
 
