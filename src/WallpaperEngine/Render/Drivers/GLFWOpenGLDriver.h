@@ -33,6 +33,8 @@ class GLFWOpenGLDriver final : public VideoDriver {
     void dispatchEventQueue () override;
     [[nodiscard]] void* getProcAddress (const char* name) const override;
 
+    void ensureFramebufferSize (glm::ivec2 size);
+
     GLFWwindow* getWindow () const;
 
   private:

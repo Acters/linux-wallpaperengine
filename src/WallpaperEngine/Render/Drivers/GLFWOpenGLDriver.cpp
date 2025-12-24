@@ -109,6 +109,9 @@ void GLFWOpenGLDriver::resizeWindow (glm::ivec4 sizeandpos) {
 }
 
 void GLFWOpenGLDriver::ensureFramebufferSize (glm::ivec2 size) {
+    sLog.out ("X11 framebuffer request: ", size.x, "x", size.y);
+    const auto initialFb = this->getFramebufferSize ();
+    sLog.out ("X11 framebuffer before resize: ", initialFb.x, "x", initialFb.y);
     this->resizeWindow (size);
 
     for (int attempt = 0; attempt < 4; ++attempt) {
@@ -136,8 +139,10 @@ void GLFWOpenGLDriver::ensureFramebufferSize (glm::ivec2 size) {
     const auto fb = this->getFramebufferSize ();
 
     if (fb.x != size.x || fb.y != size.y) {
-        sLog.warn ("Framebuffer size mismatch (requested ", size.x, "x", size.y,
-                   ", got ", fb.x, "x", fb.y, ")");
+        sLog.error ("Framebuffer size mismatch (requested ", size.x, "x", size.y,
+                    ", got ", fb.x, "x", fb.y, ")");
+    } else {
+        sLog.out ("X11 framebuffer size confirmed: ", fb.x, "x", fb.y);
     }
 }
 
@@ -178,6 +183,26 @@ void GLFWOpenGLDriver::dispatchEventQueue () {
         const int fullHeight = this->m_output->getFullHeight ();
         const int readWidth = std::min (fbSize.x, fullWidth);
         const int readHeight = std::min (fbSize.y, fullHeight);
+        const bool mismatch = (readWidth != fullWidth || readHeight != fullHeight);
+
+        static bool lastMismatch = false;
+        static int lastFbW = -1;
+        static int lastFbH = -1;
+        static int lastFullW = -1;
+        static int lastFullH = -1;
+        static int lastReadW = -1;
+        static int lastReadH = -1;
+
+        if (mismatch) {
+            if (!lastMismatch || fbSize.x != lastFbW || fbSize.y != lastFbH || fullWidth != lastFullW ||
+                fullHeight != lastFullH || readWidth != lastReadW || readHeight != lastReadH) {
+                sLog.out ("X11 readback size mismatch: fb=", fbSize.x, "x", fbSize.y, " full=", fullWidth, "x",
+                          fullHeight, " read=", readWidth, "x", readHeight, " (GL_PACK_ROW_LENGTH=", fullWidth, ")");
+            }
+        } else if (lastMismatch) {
+            sLog.out ("X11 readback sizes now match: fb=", fbSize.x, "x", fbSize.y, " full=", fullWidth, "x",
+                      fullHeight);
+        }
 
         if (readWidth > 0 && readHeight > 0) {
             if (readWidth != fullWidth || readHeight != fullHeight)
@@ -200,10 +225,19 @@ void GLFWOpenGLDriver::dispatchEventQueue () {
             glPixelStorei (GL_PACK_ROW_LENGTH, previousPackRowLength);
         }
 
+        lastMismatch = mismatch;
+        lastFbW = fbSize.x;
+        lastFbH = fbSize.y;
+        lastFullW = fullWidth;
+        lastFullH = fullHeight;
+        lastReadW = readWidth;
+        lastReadH = readHeight;
+
         GLenum error = glGetError();
 
         if (error != GL_NO_ERROR) {
-            sLog.exception("OpenGL error when reading texture ", error);
+            sLog.exception ("OpenGL error when reading texture ", error, " (fb=", fbSize.x, "x", fbSize.y,
+                            " full=", fullWidth, "x", fullHeight, " read=", readWidth, "x", readHeight, ")");
         }
     }
 

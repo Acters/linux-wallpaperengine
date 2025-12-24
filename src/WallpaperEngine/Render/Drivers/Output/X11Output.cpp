@@ -1,5 +1,6 @@
 #include "GLFWOutputViewport.h"
 #include "WallpaperEngine/Logging/Log.h"
+#include "WallpaperEngine/Render/Drivers/GLFWOpenGLDriver.h"
 #include "X11Output.h"
 
 #include <X11/Xatom.h>
@@ -110,6 +111,7 @@ void X11Output::loadScreenInfo () {
     this->m_root = DefaultRootWindow (this->m_display);
     this->m_fullWidth = DisplayWidth (this->m_display, DefaultScreen (this->m_display));
     this->m_fullHeight = DisplayHeight (this->m_display, DefaultScreen (this->m_display));
+    sLog.out ("X11 root size: ", this->m_fullWidth, "x", this->m_fullHeight);
     XRRScreenResources* screenResources = XRRGetScreenResources (this->m_display, DefaultRootWindow (this->m_display));
 
     if (screenResources == nullptr) {
@@ -191,7 +193,11 @@ void X11Output::loadScreenInfo () {
     this->m_image = XCreateImage (this->m_display, CopyFromParent, 24, ZPixmap, 0, this->m_imageData, this->m_fullWidth,
                                   this->m_fullHeight, 32, 0);
     // setup driver's render changing the window's size
-    this->m_driver.resizeWindow ({this->m_fullWidth, this->m_fullHeight});
+    if (auto* glfwDriver = dynamic_cast<WallpaperEngine::Render::Drivers::GLFWOpenGLDriver*> (&this->m_driver)) {
+        glfwDriver->ensureFramebufferSize ({this->m_fullWidth, this->m_fullHeight});
+    } else {
+        this->m_driver.resizeWindow ({this->m_fullWidth, this->m_fullHeight});
+    }
 }
 
 void X11Output::updateRender () const {
