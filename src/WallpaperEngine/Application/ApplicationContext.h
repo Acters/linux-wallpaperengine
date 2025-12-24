@@ -91,6 +91,8 @@ class ApplicationContext {
             WINDOW_MODE mode;
             /** Maximum FPS */
             int maximumFPS;
+            /** Wayland-only: layer-shell layer to use (background, bottom, top, overlay) */
+            std::string waylandLayer;
             /** Indicates if pausing should happen when something goes fullscreen */
             bool pauseOnFullscreen;
             /**
@@ -163,6 +165,7 @@ class ApplicationContext {
         .render = {
             .mode = NORMAL_WINDOW,
             .maximumFPS = 30,
+            .waylandLayer = "background",
             .pauseOnFullscreen = true,
             .pauseOnFullscreenOnlyWhenActive = false,
             .fullscreenPauseIgnoreAppIds = {},

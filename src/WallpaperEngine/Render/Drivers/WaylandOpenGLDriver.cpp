@@ -378,6 +378,10 @@ WaylandOpenGLDriver::WaylandContext* WaylandOpenGLDriver::getWaylandContext () {
     return &this->m_waylandContext;
 }
 
+ApplicationContext& WaylandOpenGLDriver::getAppContext () {
+    return this->m_context;
+}
+
 Output::WaylandOutputViewport* WaylandOpenGLDriver::surfaceToViewport (const wl_surface* surface) const {
     for (const auto& o : m_screens) {
         if (o->surface == surface)

@@ -16,6 +16,19 @@ extern "C" {
 using namespace WallpaperEngine::Render::Drivers;
 using namespace WallpaperEngine::Render::Drivers::Output;
 
+static uint32_t resolveWaylandLayer (const WallpaperEngine::Application::ApplicationContext& context) {
+    const auto& layer = context.settings.render.waylandLayer;
+
+    if (layer == "bottom")
+        return ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+    if (layer == "top")
+        return ZWLR_LAYER_SHELL_V1_LAYER_TOP;
+    if (layer == "overlay")
+        return ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
+
+    return ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
+}
+
 static void handleLSConfigure (void* data, zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t w, uint32_t h) {
     const auto viewport = static_cast<WaylandOutputViewport*> (data);
     viewport->size = {w, h};
@@ -114,9 +127,10 @@ WaylandOutputViewport::WaylandOutputViewport (WaylandOpenGLDriver* driver, uint3
 
 void WaylandOutputViewport::setupLS () {
     surface = wl_compositor_create_surface (m_driver->getWaylandContext ()->compositor);
+    const uint32_t layer = resolveWaylandLayer (m_driver->getAppContext ());
     layerSurface =
         zwlr_layer_shell_v1_get_layer_surface (m_driver->getWaylandContext ()->layerShell, surface, output,
-                                               ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND, "linux-wallpaperengine");
+                                               layer, "linux-wallpaperengine");
 
     if (!layerSurface)
         sLog.exception ("Failed to get a layer surface");

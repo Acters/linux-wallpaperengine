@@ -406,6 +406,14 @@ void ApplicationContext::loadSettingsFromArgv () {
             })
             .append ();
 
+    auto& waylandGroup = program.add_group ("Wayland options");
+
+        waylandGroup.add_argument ("--wayland-layer")
+            .help ("Wayland only: layer-shell layer for background (background, bottom, top, overlay)")
+            .choices ("background", "bottom", "top", "overlay")
+            .default_value (std::string ("background"))
+            .store_into (this->settings.render.waylandLayer);
+
     auto& audioGroup = program.add_group ("Sound settings");
     auto& audioSettingsGroup = audioGroup.add_mutually_exclusive_group (false);
 

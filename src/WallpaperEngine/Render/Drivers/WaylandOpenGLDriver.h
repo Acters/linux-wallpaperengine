@@ -78,6 +78,7 @@ class WaylandOpenGLDriver final : public VideoDriver {
 
     [[nodiscard]] SEGLContext* getEGLContext ();
     [[nodiscard]] WaylandContext* getWaylandContext ();
+    [[nodiscard]] ApplicationContext& getAppContext ();
 
     /** List of available screens */
     std::vector<Output::WaylandOutputViewport*> m_screens = {};
