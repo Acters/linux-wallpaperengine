@@ -11,6 +11,8 @@
 
 #include <GLFW/glfw3native.h>
 
+#include <algorithm>
+#include <cstring>
 #include <unistd.h>
 
 using namespace WallpaperEngine::Render::Drivers;
@@ -106,6 +108,39 @@ void GLFWOpenGLDriver::resizeWindow (glm::ivec4 sizeandpos) {
     glfwSetWindowSize (this->m_window, sizeandpos.z, sizeandpos.w);
 }
 
+void GLFWOpenGLDriver::ensureFramebufferSize (glm::ivec2 size) {
+    this->resizeWindow (size);
+
+    for (int attempt = 0; attempt < 4; ++attempt) {
+        glfwPollEvents ();
+        const auto fb = this->getFramebufferSize ();
+
+        if (fb.x == size.x && fb.y == size.y)
+            return;
+    }
+
+    // Some GLX stacks only update the drawable size once the window is mapped.
+    glfwSetWindowPos (this->m_window, -10000, -10000);
+    this->showWindow ();
+
+    for (int attempt = 0; attempt < 4; ++attempt) {
+        glfwPollEvents ();
+        const auto fb = this->getFramebufferSize ();
+
+        if (fb.x == size.x && fb.y == size.y)
+            break;
+    }
+
+    this->hideWindow ();
+
+    const auto fb = this->getFramebufferSize ();
+
+    if (fb.x != size.x || fb.y != size.y) {
+        sLog.warn ("Framebuffer size mismatch (requested ", size.x, "x", size.y,
+                   ", got ", fb.x, "x", fb.y, ")");
+    }
+}
+
 void GLFWOpenGLDriver::showWindow () {
     glfwShowWindow (this->m_window);
 }
@@ -138,13 +173,31 @@ void GLFWOpenGLDriver::dispatchEventQueue () {
 
     // read the full texture into the image
     if (this->m_output->haveImageBuffer ()) {
-        // 4.5 supports glReadnPixels, anything older doesn't...
-        if (GLEW_VERSION_4_5) {
-            glReadnPixels (0, 0, this->m_output->getFullWidth (), this->m_output->getFullHeight (), GL_BGRA,
-                           GL_UNSIGNED_BYTE, this->m_output->getImageBufferSize (), this->m_output->getImageBuffer ());
-        } else {
-            // fallback to old version
-            glReadPixels (0, 0, this->m_output->getFullWidth (), this->m_output->getFullHeight (), GL_BGRA, GL_UNSIGNED_BYTE, this->m_output->getImageBuffer ());
+        const auto fbSize = this->getFramebufferSize ();
+        const int fullWidth = this->m_output->getFullWidth ();
+        const int fullHeight = this->m_output->getFullHeight ();
+        const int readWidth = std::min (fbSize.x, fullWidth);
+        const int readHeight = std::min (fbSize.y, fullHeight);
+
+        if (readWidth > 0 && readHeight > 0) {
+            if (readWidth != fullWidth || readHeight != fullHeight)
+                memset (this->m_output->getImageBuffer (), 0, this->m_output->getImageBufferSize ());
+
+            // Ensure packed rows match the output buffer stride expected by X11 consumers
+            GLint previousPackRowLength = 0;
+            glGetIntegerv (GL_PACK_ROW_LENGTH, &previousPackRowLength);
+            glPixelStorei (GL_PACK_ROW_LENGTH, fullWidth);
+
+            // 4.5 supports glReadnPixels, anything older doesn't...
+            if (GLEW_VERSION_4_5) {
+                glReadnPixels (0, 0, readWidth, readHeight, GL_BGRA,
+                               GL_UNSIGNED_BYTE, this->m_output->getImageBufferSize (), this->m_output->getImageBuffer ());
+            } else {
+                // fallback to old version
+                glReadPixels (0, 0, readWidth, readHeight, GL_BGRA, GL_UNSIGNED_BYTE, this->m_output->getImageBuffer ());
+            }
+
+            glPixelStorei (GL_PACK_ROW_LENGTH, previousPackRowLength);
         }
 
         GLenum error = glGetError();
