@@ -292,6 +292,13 @@ void X11Output::loadScreenInfo () {
     }
     // set the window background as our pixmap
     XSetWindowBackgroundPixmap (this->m_display, this->m_root, this->m_pixmap);
+    // expose the pixmap for other programs/compositors (set once, not per-frame)
+    const Atom prop_root = XInternAtom (this->m_display, "_XROOTPMAP_ID", False);
+    const Atom prop_esetroot = XInternAtom (this->m_display, "ESETROOT_PMAP_ID", False);
+    XChangeProperty (this->m_display, this->m_root, prop_root, XA_PIXMAP, 32, PropModeReplace,
+                     (unsigned char*) &this->m_pixmap, 1);
+    XChangeProperty (this->m_display, this->m_root, prop_esetroot, XA_PIXMAP, 32, PropModeReplace,
+                     (unsigned char*) &this->m_pixmap, 1);
     // allocate space for the image's data
     this->m_imageSize = this->m_fullWidth * this->m_fullHeight * 4;
     this->m_imageData = new char [this->m_fullWidth * this->m_fullHeight * 4];
@@ -319,9 +326,7 @@ void X11Output::updateRender () const {
                this->m_fullWidth,
                this->m_fullHeight);
 
-    // _XROOTPMAP_ID & ESETROOT_PMAP_ID allow other programs (compositors) to
-    // edit the background. Without these, other programs will clear the screen.
-    // it also forces the compositor to refresh the background (tested with picom)
+    // some compositors only refresh the background when these properties update
     const Atom prop_root = XInternAtom (this->m_display, "_XROOTPMAP_ID", False);
     const Atom prop_esetroot = XInternAtom (this->m_display, "ESETROOT_PMAP_ID", False);
     XChangeProperty (this->m_display, this->m_root, prop_root, XA_PIXMAP, 32, PropModeReplace,
@@ -329,6 +334,13 @@ void X11Output::updateRender () const {
     XChangeProperty (this->m_display, this->m_root, prop_esetroot, XA_PIXMAP, 32, PropModeReplace,
                      (unsigned char*) &this->m_pixmap, 1);
 
-    XClearWindow (this->m_display, this->m_root);
+    // only mark the target region dirty to avoid forcing full-root redraws
+    XClearArea (this->m_display,
+                this->m_root,
+                this->m_rootOffsetX,
+                this->m_rootOffsetY,
+                static_cast<unsigned int> (this->m_fullWidth),
+                static_cast<unsigned int> (this->m_fullHeight),
+                False);
     XFlush (this->m_display);
 }
