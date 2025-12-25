@@ -247,7 +247,15 @@ void X11Output::loadScreenInfo () {
 
 void X11Output::updateRender () const {
     // put the image back into the screen
-    XPutImage (this->m_display, this->m_pixmap, this->m_gc, this->m_image, 0, 0, 0, 0, this->m_fullWidth,
+    XPutImage (this->m_display,
+               this->m_pixmap,
+               this->m_gc,
+               this->m_image,
+               0,
+               0,
+               this->m_rootOffsetX,
+               this->m_rootOffsetY,
+               this->m_fullWidth,
                this->m_fullHeight);
 
     // _XROOTPMAP_ID & ESETROOT_PMAP_ID allow other programs (compositors) to
