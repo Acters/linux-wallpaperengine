@@ -15,6 +15,7 @@
 #include <cstring>
 #ifdef ENABLE_X11
 #include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
 #endif
 #include <unistd.h>
 
@@ -57,8 +58,81 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (
     glfwWindowHint (GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #endif /* DEBUG */
 
+    glm::ivec2 initialSize {640, 480};
+
+#ifdef ENABLE_X11
+    if (context.settings.render.mode == ApplicationContext::DESKTOP_BACKGROUND) {
+        Display* preDisplay = XOpenDisplay (nullptr);
+        if (preDisplay != nullptr) {
+            int xrandr_result = 0;
+            int xrandr_error = 0;
+
+            if (XRRQueryExtension (preDisplay, &xrandr_result, &xrandr_error)) {
+                Window root = DefaultRootWindow (preDisplay);
+                XRRScreenResources* screenResources = XRRGetScreenResources (preDisplay, root);
+
+                if (screenResources != nullptr) {
+                    bool haveRequestedBounds = false;
+                    int minX = 0;
+                    int minY = 0;
+                    int maxX = 0;
+                    int maxY = 0;
+
+                    for (int i = 0; i < screenResources->noutput; ++i) {
+                        XRROutputInfo* info = XRRGetOutputInfo (preDisplay, screenResources, screenResources->outputs [i]);
+
+                        if (info == nullptr || info->connection != RR_Connected)
+                            continue;
+
+                        XRRCrtcInfo* crtc = XRRGetCrtcInfo (preDisplay, screenResources, info->crtc);
+
+                        if (crtc == nullptr)
+                            continue;
+
+                        const bool requested =
+                            context.settings.general.screenBackgrounds.find (info->name) !=
+                            context.settings.general.screenBackgrounds.end ();
+
+                        if (requested) {
+                            const int screenMinX = crtc->x;
+                            const int screenMinY = crtc->y;
+                            const int screenMaxX = crtc->x + static_cast<int> (crtc->width);
+                            const int screenMaxY = crtc->y + static_cast<int> (crtc->height);
+
+                            if (!haveRequestedBounds) {
+                                minX = screenMinX;
+                                minY = screenMinY;
+                                maxX = screenMaxX;
+                                maxY = screenMaxY;
+                                haveRequestedBounds = true;
+                            } else {
+                                minX = std::min (minX, screenMinX);
+                                minY = std::min (minY, screenMinY);
+                                maxX = std::max (maxX, screenMaxX);
+                                maxY = std::max (maxY, screenMaxY);
+                            }
+                        }
+
+                        XRRFreeCrtcInfo (crtc);
+                    }
+
+                    XRRFreeScreenResources (screenResources);
+
+                    if (haveRequestedBounds) {
+                        initialSize.x = std::max (1, maxX - minX);
+                        initialSize.y = std::max (1, maxY - minY);
+                        sLog.out ("X11 precreate window size: ", initialSize.x, "x", initialSize.y);
+                    }
+                }
+            }
+
+            XCloseDisplay (preDisplay);
+        }
+    }
+#endif
+
     // create window, size doesn't matter as long as we don't show it
-    this->m_window = glfwCreateWindow (640, 480, windowTitle, nullptr, nullptr);
+    this->m_window = glfwCreateWindow (initialSize.x, initialSize.y, windowTitle, nullptr, nullptr);
 
     if (this->m_window == nullptr)
         sLog.exception ("Cannot create window");
