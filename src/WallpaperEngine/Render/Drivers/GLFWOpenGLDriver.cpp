@@ -125,16 +125,29 @@ void GLFWOpenGLDriver::resizeWindow (glm::ivec4 sizeandpos) {
 }
 
 void GLFWOpenGLDriver::ensureFramebufferSize (glm::ivec2 size) {
+#ifdef ENABLE_X11
+    Display* x11Display = glfwGetX11Display ();
+    Window x11Window = 0;
+    if (x11Display != nullptr)
+        x11Window = glfwGetX11Window (this->m_window);
+#endif
     sLog.out ("X11 framebuffer request: ", size.x, "x", size.y);
     const auto initialFb = this->getFramebufferSize ();
+    int initialWinW = 0;
+    int initialWinH = 0;
+    glfwGetWindowSize (this->m_window, &initialWinW, &initialWinH);
     sLog.out ("X11 framebuffer before resize: ", initialFb.x, "x", initialFb.y);
+    sLog.out ("X11 window before resize: ", initialWinW, "x", initialWinH);
     this->resizeWindow (size);
 
     for (int attempt = 0; attempt < 4; ++attempt) {
         glfwPollEvents ();
+        int winW = 0;
+        int winH = 0;
+        glfwGetWindowSize (this->m_window, &winW, &winH);
         const auto fb = this->getFramebufferSize ();
 
-        if (fb.x == size.x && fb.y == size.y)
+        if (fb.x == size.x && fb.y == size.y && winW == size.x && winH == size.y)
             return;
     }
 
@@ -144,19 +157,35 @@ void GLFWOpenGLDriver::ensureFramebufferSize (glm::ivec2 size) {
 
     for (int attempt = 0; attempt < 4; ++attempt) {
         glfwPollEvents ();
+        int winW = 0;
+        int winH = 0;
+        glfwGetWindowSize (this->m_window, &winW, &winH);
         const auto fb = this->getFramebufferSize ();
 
-        if (fb.x == size.x && fb.y == size.y)
+        if (fb.x == size.x && fb.y == size.y && winW == size.x && winH == size.y)
             break;
     }
 
     this->hideWindow ();
 
-    const auto fb = this->getFramebufferSize ();
+#ifdef ENABLE_X11
+    if (x11Display != nullptr && x11Window != 0) {
+        XResizeWindow (x11Display, x11Window, static_cast<unsigned int> (size.x), static_cast<unsigned int> (size.y));
+        XSync (x11Display, False);
+        glfwPollEvents ();
+    }
+#endif
 
-    if (fb.x != size.x || fb.y != size.y) {
+    const auto fb = this->getFramebufferSize ();
+    int winW = 0;
+    int winH = 0;
+    glfwGetWindowSize (this->m_window, &winW, &winH);
+
+    if (fb.x != size.x || fb.y != size.y || winW != size.x || winH != size.y) {
         sLog.error ("Framebuffer size mismatch (requested ", size.x, "x", size.y,
                     ", got ", fb.x, "x", fb.y, ")");
+        sLog.error ("X11 window size mismatch (requested ", size.x, "x", size.y,
+                    ", got ", winW, "x", winH, ")");
     } else {
         sLog.out ("X11 framebuffer size confirmed: ", fb.x, "x", fb.y);
     }
