@@ -227,8 +227,64 @@ void X11Output::loadScreenInfo () {
     // create pixmap so we can draw things in there
     this->m_pixmap = XCreatePixmap (this->m_display, this->m_root, this->m_rootWidth, this->m_rootHeight, 24);
     this->m_gc = XCreateGC (this->m_display, this->m_pixmap, 0, nullptr);
-    // pre-fill it with black
-    XFillRectangle (this->m_display, this->m_pixmap, this->m_gc, 0, 0, this->m_rootWidth, this->m_rootHeight);
+
+    // try to preserve the existing root pixmap (keeps other monitors unchanged)
+    Pixmap rootPixmap = None;
+    {
+        const Atom propRoot = XInternAtom (this->m_display, "_XROOTPMAP_ID", False);
+        const Atom propEsetroot = XInternAtom (this->m_display, "ESETROOT_PMAP_ID", False);
+
+        auto resolveRootPixmap = [&](Atom prop) -> Pixmap {
+            Atom actualType = None;
+            int actualFormat = 0;
+            unsigned long nitems = 0;
+            unsigned long bytesAfter = 0;
+            unsigned char* data = nullptr;
+
+            if (XGetWindowProperty (this->m_display, this->m_root, prop, 0, 1, False, XA_PIXMAP,
+                                    &actualType, &actualFormat, &nitems, &bytesAfter, &data) == Success &&
+                actualType == XA_PIXMAP && nitems == 1 && data != nullptr) {
+                const auto result = *reinterpret_cast<Pixmap*> (data);
+                XFree (data);
+                return result;
+            }
+
+            if (data != nullptr)
+                XFree (data);
+
+            return None;
+        };
+
+        rootPixmap = resolveRootPixmap (propRoot);
+
+        if (rootPixmap == None)
+            rootPixmap = resolveRootPixmap (propEsetroot);
+    }
+
+    if (rootPixmap != None) {
+        Window pixRoot = 0;
+        int pixX = 0;
+        int pixY = 0;
+        unsigned int pixW = 0;
+        unsigned int pixH = 0;
+        unsigned int pixBorder = 0;
+        unsigned int pixDepth = 0;
+
+        if (XGetGeometry (this->m_display, rootPixmap, &pixRoot, &pixX, &pixY, &pixW, &pixH, &pixBorder, &pixDepth) &&
+            pixDepth == static_cast<unsigned int> (DefaultDepth (this->m_display, DefaultScreen (this->m_display)))) {
+            const unsigned int copyW = std::min (pixW, static_cast<unsigned int> (this->m_rootWidth));
+            const unsigned int copyH = std::min (pixH, static_cast<unsigned int> (this->m_rootHeight));
+            XCopyArea (this->m_display, rootPixmap, this->m_pixmap, this->m_gc, 0, 0, copyW, copyH, 0, 0);
+            sLog.out ("X11 preserved root pixmap");
+        } else {
+            XFillRectangle (this->m_display, this->m_pixmap, this->m_gc, 0, 0, this->m_rootWidth, this->m_rootHeight);
+            sLog.out ("X11 root pixmap incompatible, filled black");
+        }
+    } else {
+        // pre-fill it with black if no root pixmap is available
+        XFillRectangle (this->m_display, this->m_pixmap, this->m_gc, 0, 0, this->m_rootWidth, this->m_rootHeight);
+        sLog.out ("X11 root pixmap missing, filled black");
+    }
     // set the window background as our pixmap
     XSetWindowBackgroundPixmap (this->m_display, this->m_root, this->m_pixmap);
     // allocate space for the image's data
