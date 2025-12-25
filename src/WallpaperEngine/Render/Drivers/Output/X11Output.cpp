@@ -274,6 +274,11 @@ void X11Output::loadScreenInfo () {
             pixDepth == static_cast<unsigned int> (DefaultDepth (this->m_display, DefaultScreen (this->m_display)))) {
             const unsigned int copyW = std::min (pixW, static_cast<unsigned int> (this->m_rootWidth));
             const unsigned int copyH = std::min (pixH, static_cast<unsigned int> (this->m_rootHeight));
+            if (copyW != static_cast<unsigned int> (this->m_rootWidth) ||
+                copyH != static_cast<unsigned int> (this->m_rootHeight)) {
+                XFillRectangle (this->m_display, this->m_pixmap, this->m_gc, 0, 0, this->m_rootWidth, this->m_rootHeight);
+            }
+
             XCopyArea (this->m_display, rootPixmap, this->m_pixmap, this->m_gc, 0, 0, copyW, copyH, 0, 0);
             sLog.out ("X11 preserved root pixmap");
         } else {
