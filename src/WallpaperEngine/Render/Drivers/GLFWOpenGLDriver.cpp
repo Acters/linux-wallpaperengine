@@ -13,6 +13,9 @@
 
 #include <algorithm>
 #include <cstring>
+#ifdef ENABLE_X11
+#include <X11/Xlib.h>
+#endif
 #include <unistd.h>
 
 using namespace WallpaperEngine::Render::Drivers;
@@ -59,6 +62,19 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (
 
     if (this->m_window == nullptr)
         sLog.exception ("Cannot create window");
+
+#ifdef ENABLE_X11
+    if (context.settings.render.mode == ApplicationContext::DESKTOP_BACKGROUND) {
+        Display* x11Display = glfwGetX11Display ();
+        if (x11Display != nullptr) {
+            const Window x11Window = glfwGetX11Window (this->m_window);
+            XSetWindowAttributes attributes;
+            attributes.override_redirect = True;
+            XChangeWindowAttributes (x11Display, x11Window, CWOverrideRedirect, &attributes);
+            XFlush (x11Display);
+        }
+    }
+#endif
 
     // make context current, required for glew initialization
     glfwMakeContextCurrent (this->m_window);

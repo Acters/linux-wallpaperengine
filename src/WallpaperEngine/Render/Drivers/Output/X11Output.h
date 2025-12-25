@@ -32,6 +32,10 @@ class X11Output final : public Output {
     Pixmap m_pixmap;
     Window m_root;
     GC m_gc;
+    int m_rootWidth = 0;
+    int m_rootHeight = 0;
+    int m_rootOffsetX = 0;
+    int m_rootOffsetY = 0;
     char* m_imageData = nullptr;
     uint32_t m_imageSize = 0;
     XImage* m_image = nullptr;

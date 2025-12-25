@@ -3,6 +3,7 @@
 #include "WallpaperEngine/Render/Drivers/GLFWOpenGLDriver.h"
 #include "X11Output.h"
 
+#include <algorithm>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
@@ -109,15 +110,21 @@ void X11Output::loadScreenInfo () {
     }
 
     this->m_root = DefaultRootWindow (this->m_display);
-    this->m_fullWidth = DisplayWidth (this->m_display, DefaultScreen (this->m_display));
-    this->m_fullHeight = DisplayHeight (this->m_display, DefaultScreen (this->m_display));
-    sLog.out ("X11 root size: ", this->m_fullWidth, "x", this->m_fullHeight);
+    this->m_rootWidth = DisplayWidth (this->m_display, DefaultScreen (this->m_display));
+    this->m_rootHeight = DisplayHeight (this->m_display, DefaultScreen (this->m_display));
+    sLog.out ("X11 root size: ", this->m_rootWidth, "x", this->m_rootHeight);
     XRRScreenResources* screenResources = XRRGetScreenResources (this->m_display, DefaultRootWindow (this->m_display));
 
     if (screenResources == nullptr) {
         sLog.error ("Cannot detect screen sizes using xrandr, running in window mode");
         return;
     }
+
+    bool haveRequestedBounds = false;
+    int minX = 0;
+    int minY = 0;
+    int maxX = 0;
+    int maxY = 0;
 
     for (int i = 0; i < screenResources->noutput; i++) {
         const XRROutputInfo* info = XRRGetOutputInfo (this->m_display, screenResources, screenResources->outputs [i]);
@@ -143,6 +150,24 @@ void X11Output::loadScreenInfo () {
 
             this->m_viewports [info->name] =
                 new GLFWOutputViewport {{crtc->x, crtc->y, crtc->width, crtc->height}, info->name};
+
+            const int screenMinX = crtc->x;
+            const int screenMinY = crtc->y;
+            const int screenMaxX = crtc->x + static_cast<int> (crtc->width);
+            const int screenMaxY = crtc->y + static_cast<int> (crtc->height);
+
+            if (!haveRequestedBounds) {
+                minX = screenMinX;
+                minY = screenMinY;
+                maxX = screenMaxX;
+                maxY = screenMaxY;
+                haveRequestedBounds = true;
+            } else {
+                minX = std::min (minX, screenMinX);
+                minY = std::min (minY, screenMinY);
+                maxX = std::max (maxX, screenMaxX);
+                maxY = std::max (maxY, screenMaxY);
+            }
         }
 
         XRRFreeCrtcInfo (crtc);
@@ -178,12 +203,32 @@ void X11Output::loadScreenInfo () {
         sLog.exception ("Cannot continue...");
     }
 
+    if (haveRequestedBounds) {
+        this->m_rootOffsetX = minX;
+        this->m_rootOffsetY = minY;
+        this->m_fullWidth = maxX - minX;
+        this->m_fullHeight = maxY - minY;
+
+        for (const auto& [name, viewport] : this->m_viewports) {
+            viewport->viewport.x -= this->m_rootOffsetX;
+            viewport->viewport.y -= this->m_rootOffsetY;
+        }
+
+        sLog.out ("X11 render bounds: ", this->m_fullWidth, "x", this->m_fullHeight, " @ ",
+                  this->m_rootOffsetX, "x", this->m_rootOffsetY);
+    } else {
+        this->m_fullWidth = this->m_rootWidth;
+        this->m_fullHeight = this->m_rootHeight;
+        this->m_rootOffsetX = 0;
+        this->m_rootOffsetY = 0;
+    }
+
 
     // create pixmap so we can draw things in there
-    this->m_pixmap = XCreatePixmap (this->m_display, this->m_root, this->m_fullWidth, this->m_fullHeight, 24);
+    this->m_pixmap = XCreatePixmap (this->m_display, this->m_root, this->m_rootWidth, this->m_rootHeight, 24);
     this->m_gc = XCreateGC (this->m_display, this->m_pixmap, 0, nullptr);
     // pre-fill it with black
-    XFillRectangle (this->m_display, this->m_pixmap, this->m_gc, 0, 0, this->m_fullWidth, this->m_fullHeight);
+    XFillRectangle (this->m_display, this->m_pixmap, this->m_gc, 0, 0, this->m_rootWidth, this->m_rootHeight);
     // set the window background as our pixmap
     XSetWindowBackgroundPixmap (this->m_display, this->m_root, this->m_pixmap);
     // allocate space for the image's data
