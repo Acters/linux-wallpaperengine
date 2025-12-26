@@ -7,6 +7,10 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
+#ifdef HAVE_XFIXES
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/shape.h>
+#endif
 
 using namespace WallpaperEngine::Render::Drivers::Output;
 
@@ -67,12 +71,35 @@ void X11Output::free () {
 
     this->m_viewports.clear ();
 
+    if (this->m_display != nullptr) {
+        for (const auto& [name, gc] : this->m_windowGCs) {
+            if (gc != None)
+                XFreeGC (this->m_display, gc);
+        }
+
+        for (const auto& [name, window] : this->m_windows) {
+            if (window != None)
+                XDestroyWindow (this->m_display, window);
+        }
+    }
+
+    this->m_windowGCs.clear ();
+    this->m_windows.clear ();
+
     // free all the resources we've got
-    XDestroyImage (this->m_image);
-    XFreeGC (this->m_display, this->m_gc);
-    XFreePixmap (this->m_display, this->m_pixmap);
-    delete this->m_imageData;
-    XCloseDisplay (this->m_display);
+    if (this->m_image != nullptr)
+        XDestroyImage (this->m_image);
+
+    if (this->m_display != nullptr && this->m_gc != None)
+        XFreeGC (this->m_display, this->m_gc);
+
+    if (this->m_display != nullptr && this->m_pixmap != None)
+        XFreePixmap (this->m_display, this->m_pixmap);
+
+    delete [] this->m_imageData;
+
+    if (this->m_display != nullptr)
+        XCloseDisplay (this->m_display);
 }
 
 void* X11Output::getImageBuffer () const {
@@ -222,7 +249,31 @@ void X11Output::loadScreenInfo () {
         this->m_rootOffsetX = 0;
         this->m_rootOffsetY = 0;
     }
+#ifdef HAVE_XFIXES
+    bool xfixesAvailable = false;
+    {
+        int eventBase = 0;
+        int errorBase = 0;
+        int major = 0;
+        int minor = 0;
 
+        if (XFixesQueryExtension (this->m_display, &eventBase, &errorBase) &&
+            XFixesQueryVersion (this->m_display, &major, &minor)) {
+            if (major >= 2) {
+                xfixesAvailable = true;
+            } else {
+                sLog.out ("X11 XFixes version too old (", major, ".", minor, "), falling back to root pixmap");
+            }
+        }
+    }
+
+    this->m_usePerOutputWindows = xfixesAvailable;
+
+    if (!xfixesAvailable)
+        sLog.out ("X11 XFixes unavailable at runtime, falling back to root pixmap");
+#else
+    this->m_usePerOutputWindows = false;
+#endif
 
     // create pixmap so we can draw things in there
     this->m_pixmap = XCreatePixmap (this->m_display, this->m_root, this->m_rootWidth, this->m_rootHeight, 24);
@@ -299,6 +350,63 @@ void X11Output::loadScreenInfo () {
                      (unsigned char*) &this->m_pixmap, 1);
     XChangeProperty (this->m_display, this->m_root, prop_esetroot, XA_PIXMAP, 32, PropModeReplace,
                      (unsigned char*) &this->m_pixmap, 1);
+
+    if (this->m_usePerOutputWindows) {
+        sLog.out ("X11 per-output windows enabled");
+
+        const Atom netWmWindowType = XInternAtom (this->m_display, "_NET_WM_WINDOW_TYPE", False);
+        const Atom netWmWindowTypeDesktop = XInternAtom (this->m_display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
+        const Atom netWmState = XInternAtom (this->m_display, "_NET_WM_STATE", False);
+        const Atom netWmStateBelow = XInternAtom (this->m_display, "_NET_WM_STATE_BELOW", False);
+        const Atom netWmStateSticky = XInternAtom (this->m_display, "_NET_WM_STATE_STICKY", False);
+        const Atom netWmStateSkipTaskbar = XInternAtom (this->m_display, "_NET_WM_STATE_SKIP_TASKBAR", False);
+        const Atom netWmStateSkipPager = XInternAtom (this->m_display, "_NET_WM_STATE_SKIP_PAGER", False);
+
+        for (const auto& [name, viewport] : this->m_viewports) {
+            const int absX = viewport->viewport.x + this->m_rootOffsetX;
+            const int absY = viewport->viewport.y + this->m_rootOffsetY;
+            const unsigned int width = static_cast<unsigned int> (viewport->viewport.z);
+            const unsigned int height = static_cast<unsigned int> (viewport->viewport.w);
+
+            XSetWindowAttributes attributes;
+            attributes.override_redirect = True;
+            attributes.background_pixmap = None;
+
+            const Window window = XCreateWindow (this->m_display,
+                                                 this->m_root,
+                                                 absX,
+                                                 absY,
+                                                 width,
+                                                 height,
+                                                 0,
+                                                 CopyFromParent,
+                                                 InputOutput,
+                                                 CopyFromParent,
+                                                 CWOverrideRedirect | CWBackPixmap,
+                                                 &attributes);
+
+            XChangeProperty (this->m_display, window, netWmWindowType, XA_ATOM, 32, PropModeReplace,
+                             reinterpret_cast<unsigned char*> (const_cast<Atom*> (&netWmWindowTypeDesktop)), 1);
+
+            const Atom states[] = {netWmStateBelow, netWmStateSticky, netWmStateSkipTaskbar, netWmStateSkipPager};
+            XChangeProperty (this->m_display, window, netWmState, XA_ATOM, 32, PropModeReplace,
+                             reinterpret_cast<unsigned char*> (const_cast<Atom*> (states)), 4);
+
+#ifdef HAVE_XFIXES
+            XserverRegion region = XFixesCreateRegion (this->m_display, nullptr, 0);
+            XFixesSetWindowShapeRegion (this->m_display, window, ShapeInput, 0, 0, region);
+            XFixesDestroyRegion (this->m_display, region);
+#endif
+
+            XMapWindow (this->m_display, window);
+            XLowerWindow (this->m_display, window);
+
+            this->m_windows [name] = window;
+            this->m_windowGCs [name] = XCreateGC (this->m_display, window, 0, nullptr);
+        }
+
+        XFlush (this->m_display);
+    }
     // allocate space for the image's data
     this->m_imageSize = this->m_fullWidth * this->m_fullHeight * 4;
     this->m_imageData = new char [this->m_fullWidth * this->m_fullHeight * 4];
@@ -314,6 +422,51 @@ void X11Output::loadScreenInfo () {
 }
 
 void X11Output::updateRender () const {
+    if (this->m_usePerOutputWindows) {
+        for (const auto& [name, viewport] : this->m_viewports) {
+            const auto windowIt = this->m_windows.find (name);
+            const auto gcIt = this->m_windowGCs.find (name);
+
+            if (windowIt == this->m_windows.end () || gcIt == this->m_windowGCs.end ())
+                continue;
+
+            XPutImage (this->m_display,
+                       windowIt->second,
+                       gcIt->second,
+                       this->m_image,
+                       viewport->viewport.x,
+                       viewport->viewport.y,
+                       0,
+                       0,
+                       viewport->viewport.z,
+                       viewport->viewport.w);
+        }
+
+        // keep root pixmap and properties updated for pseudo-transparency consumers
+        if (this->m_pixmap != None && this->m_gc != None) {
+            XPutImage (this->m_display,
+                       this->m_pixmap,
+                       this->m_gc,
+                       this->m_image,
+                       0,
+                       0,
+                       this->m_rootOffsetX,
+                       this->m_rootOffsetY,
+                       this->m_fullWidth,
+                       this->m_fullHeight);
+
+            const Atom prop_root = XInternAtom (this->m_display, "_XROOTPMAP_ID", False);
+            const Atom prop_esetroot = XInternAtom (this->m_display, "ESETROOT_PMAP_ID", False);
+            XChangeProperty (this->m_display, this->m_root, prop_root, XA_PIXMAP, 32, PropModeReplace,
+                             (unsigned char*) &this->m_pixmap, 1);
+            XChangeProperty (this->m_display, this->m_root, prop_esetroot, XA_PIXMAP, 32, PropModeReplace,
+                             (unsigned char*) &this->m_pixmap, 1);
+        }
+
+        XFlush (this->m_display);
+        return;
+    }
+
     // put the image back into the screen
     XPutImage (this->m_display,
                this->m_pixmap,

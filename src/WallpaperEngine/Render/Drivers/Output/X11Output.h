@@ -36,6 +36,9 @@ class X11Output final : public Output {
     int m_rootHeight = 0;
     int m_rootOffsetX = 0;
     int m_rootOffsetY = 0;
+    bool m_usePerOutputWindows = false;
+    std::map<std::string, Window> m_windows = {};
+    std::map<std::string, GC> m_windowGCs = {};
     char* m_imageData = nullptr;
     uint32_t m_imageSize = 0;
     XImage* m_image = nullptr;
