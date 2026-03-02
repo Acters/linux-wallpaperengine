@@ -7,18 +7,14 @@ using namespace WallpaperEngine::Render;
 using namespace WallpaperEngine::Render::Wallpapers;
 
 CObject::CObject (Wallpapers::CScene& scene, const Object& object) :
-    Helpers::ContextAware (scene),
-    m_scene (scene),
-    m_object (object) {}
+    Helpers::ContextAware (scene), m_scene (scene), m_object (object) { }
 
-Wallpapers::CScene& CObject::getScene () const {
-    return this->m_scene;
-}
+void CObject::render () { }
 
-const AssetLocator& CObject::getAssetLocator () const {
-    return this->getScene ().getAssetLocator ();
-}
+Wallpapers::CScene& CObject::getScene () const { return this->m_scene; }
 
-int CObject::getId () const {
-    return this->m_object.id;
-}
+const AssetLocator& CObject::getAssetLocator () const { return this->getScene ().getAssetLocator (); }
+
+int CObject::getId () const { return this->m_object.id; }
+
+const Object& CObject::getObject () const { return this->m_object; }

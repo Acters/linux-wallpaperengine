@@ -2,13 +2,14 @@
 	<a href="https://github.com/Almamu/linux-wallpaperengine/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Almamu/linux-wallpaperengine" /></a>
     <a href="https://github.com/Almamu/linux-wallpaperengine/actions?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/Almamu/linux-wallpaperengine/cmake.yml?branch=main" /></a>
     <img src="https://img.shields.io/coderabbit/prs/github/Almamu/linux-wallpaperengine?utm_source=oss&utm_medium=github&utm_campaign=Almamu%2Flinux-wallpaperengine&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews" />
-    <a href="https://github.com/Almamu/linux-wallpaperengine/pulse"><img src="https://img.shields.io/tokei/lines/github/Almamu/linux-wallpaperengine" /></a>
+    <a href="https://github.com/Almamu/linux-wallpaperengine/pulse"><img src="https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/Almamu/linux-wallpaperengine/badge?filter=.cpp$,.h$&style=flat&logoColor=white&label=Lines of Code" /></a>
 	<a href="https://www.codefactor.io/repository/github/almamu/linux-wallpaperengine"><img src="https://img.shields.io/codefactor/grade/github/Almamu/linux-wallpaperengine" /></a>
 	<a href="https://github.com/Almamu/linux-wallpaperengine/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/m/Almamu/linux-wallpaperengine" /></a>
 	<a href="https://github.com/Almamu/linux-wallpaperengine/graphs/contributors"><img src="https://img.shields.io/github/contributors/Almamu/linux-wallpaperengine" /></a>
 	<a href="https://github.com/Almamu/linux-wallpaperengine/issues"><img src="https://img.shields.io/github/issues-raw/Almamu/linux-wallpaperengine" /></a>
 	<a href="https://github.com/Almamu/linux-wallpaperengine/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22"><img src="https://img.shields.io/github/issues/Almamu/linux-wallpaperengine/help%20wanted?color=green" alt="help wanted"></a>
-    <a href="https://wpengine.alma.mu/"><img src="https://img.shields.io/badge/showcase_gallery-blue" alt="Compatibility gallery" /></a>
+    <a href="https://wpengine.alma.mu/"><img src="https://img.shields.io/badge/showcase_gallery-blue" alt="Showcase gallery" /></a>
+    <a href="https://deepwiki.com/Almamu/linux-wallpaperengine"><img src="https://img.shields.io/badge/Deepwiki-Almamu%2Flinux--wallpaperengine-blue?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACwAAAAyCAYAAAAnWDnqAAAAAXNSR0IArs4c6QAAA05JREFUaEPtmUtyEzEQhtWTQyQLHNak2AB7ZnyXZMEjXMGeK%2FAIi%2BQuHrMnbChYY7MIh8g01fJoopFb0uhhEqqcbWTp06%2Fuv1saEDv4O3n3dV60RfP947Mm9%2FSQc0ICFQgzfc4CYZoTPAswgSJCCUJUnAAoRHOAUOcATwbmVLWdGoH%2F%2FPB8mnKqScAhsD0kYP3j%2FYt5LPQe2KvcXmGvRHcDnpxfL2zOYJ1mFwrryWTz0advv1Ut4CJgf5uhDuDj5eUcAUoahrdY%2F56ebRWeraTjMt%2F00Sh3UDtjgHtQNHwcRGOC98BJEAEymycmYcWwOprTgcB6VZ5JK5TAJ%2BfXGLBm3FDAmn6oPPjR4rKCAoJCal2eAiQp2x0vxTPB3ALO2CRkwmDy5WohzBDwSEFKRwPbknEggCPB%2FimwrycgxX2NzoMCHhPkDwqYMr9tRcP5qNrMZHkVnOjRMWwLCcr8ohBVb1OMjxLwGCvjTikrsBOiA6fNyCrm8V1rP93iVPpwaE%2BgO0SsWmPiXB%2Bjikdf6SizrT5qKasx5j8ABbHpFTx%2BvFXp9EnYQmLx02h1QTTrl6eDqxLnGjporxl3NL3agEvXdT0WmEost648sQOYAeJS9Q7bfUVoMGnjo4AZdUMQku50McDcMWcBPvr0SzbTAFDfvJqwLzgxwATnCgnp4wDl6Aa%2BAx283gghmj%2Bvj7feE2KBBRMW3FzOpLOADl0Isb5587h%2FU4gGvkt5v60Z1VLG8BhYjbzRwyQZemwAd6cCR5%2FXFWLYZRIMpX39AR0tjaGGiGzLVyhse5C9RKC6ai42ppWPKiBagOvaYk8lO7DajerabOZP46Lby5wKjw1HCRx7p9sVMOWGzb%2FvA1hwiWc6jm3MvQDTogQkiqIhJV0nBQBTU%2B3okKCFDy9WwferkHjtxib7t3xIUQtHxnIwtx4mpg26%2FHfwVNVDb4oI9RHmx5WGelRVlrtiw43zboCLaxv46AZeB3IlTkwouebTr1y2NjSpHz68WNFjHvupy3q8TFn3Hos2IAk4Ju5dCo8B3wP7VPr%2FFGaKiG%2BT%2Bv%2BTQqIrOqMTL1VdWV1DdmcbO8KXBz6esmYWYKPwDL5b5FA1a0hwapHiom0r%2FcKaoqr%2B27%2FXcrS5UwSMbQAAAABJRU5ErkJggg%3D%3D" alt="DeepWiki documentation" /></a>
 </p>
 
 # 🖼️ Linux Wallpaper Engine
@@ -60,7 +61,7 @@ Install the required dependencies on RHEL/Fedora-based systems:
 ### Fedora 42
 ```bash
 sudo dnf update
-sudo dnf install gcc g++ cmake libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel mesa-libGL-devel glew-devel freeglut-devel SDL2-devel lz4-devel ffmpeg ffmpeg-free-devel libXxf86vm-devel glm-devel glfw-devel mpv mpv-devel pulseaudio-libs-devel fftw-devel
+sudo dnf install gcc g++ cmake libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel mesa-libGL-devel glew-devel freeglut-devel SDL2-devel lz4-devel ffmpeg ffmpeg-free-devel libXxf86vm-devel glm-devel glfw-devel mpv mpv-devel pulseaudio-libs-devel fftw-devel gmp-devel
 ```
 
 ---
@@ -112,9 +113,15 @@ You can copy the `assets` folder manually:
 2. Copy the `assets` folder
 3. Paste it into the same folder where the `linux-wallpaperengine` binary is located (build/output if you followed the build instructions)
 
+Another option is to specify the path manually with the `--assets-dir` option, like this:
+```bash
+linux-wallpaperengine --assets-dir /path/to/assets
+```
 ---
 
 ### 2. Build from Source
+
+> ⚠️ If you installed the AUR package mentioned before, you can skip this step.
 
 Clone the repo:
 
@@ -134,8 +141,6 @@ make
 Once the build process is finished, this should create a new `output` folder containing the app and all the required
 support files to run.
 
-> ✅ Remember: Place the `assets` folder next to the built binary if it isn’t detected automatically.
-
 ---
 
 ## 🧪 Usage
@@ -143,7 +148,7 @@ support files to run.
 Basic syntax:
 
 ```bash
-./linux-wallpaperengine [options] <background_id or path>
+linux-wallpaperengine [options] <background_id or path>
 ```
 
 You can use either:
@@ -159,7 +164,7 @@ There's a few developers that decided to focus on this and created their own.
 If you're one of those developers, feel free to open an issue to get your project included here!
 
 - @Maxnights' GUI: https://github.com/Maxnights/simple-linux-wallpaperengine-gui
-
+- @jagrat7's GUI: https://github.com/jagrat7/linux-wallpaper-engine
 ### 🔧 Common Options
 
 | Option | Description |
@@ -190,34 +195,34 @@ If you're one of those developers, feel free to open an issue to get your projec
 
 #### Run a background by ID
 ```bash
-./linux-wallpaperengine 1845706469
+linux-wallpaperengine 1845706469
 ```
 
 #### Run a background from a folder
 ```bash
-./linux-wallpaperengine ~/backgrounds/1845706469/
+linux-wallpaperengine ~/backgrounds/1845706469/
 ```
 
 #### Assign backgrounds to screens with scaling
 ```bash
-./linux-wallpaperengine \
+linux-wallpaperengine \
   --scaling stretch --screen-root eDP-1 --bg 2667198601 \
   --scaling fill --screen-root HDMI-1 --bg 2667198602
 ```
 
 #### Run in a window
 ```bash
-./linux-wallpaperengine --window 0x0x1280x720 1845706469
+linux-wallpaperengine --window 0x0x1280x720 1845706469
 ```
 
 #### Limit FPS to save power
 ```bash
-./linux-wallpaperengine --fps 30 1845706469
+linux-wallpaperengine --fps 30 1845706469
 ```
 
 #### Take a screenshot
 ```bash
-./linux-wallpaperengine --screenshot ~/wallpaper.png 1845706469
+linux-wallpaperengine --screenshot ~/wallpaper.png 1845706469
 ```
 
 This can be useful as output for pywal or other color systems that use images as basis to generate a set of colors
@@ -225,7 +230,7 @@ to apply to your system.
 
 #### View and change properties
 ```bash
-./linux-wallpaperengine --list-properties 2370927443
+linux-wallpaperengine --list-properties 2370927443
 ```
 
 The output includes all the relevant information for each of the different properties:
@@ -280,7 +285,7 @@ visualizerwidth - slider
 
 Any of these values can be modified with the --set-property switch. Say you want to enable the bloom in this background, you would do so like this:
 ```
-./linux-wallpaperengine --set-property bloom=1 2370927443
+linux-wallpaperengine --set-property bloom=1 2370927443
 ```
 
 ---

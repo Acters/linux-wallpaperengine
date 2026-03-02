@@ -16,7 +16,7 @@ namespace WallpaperEngine::Audio::Drivers {
  */
 struct SDLAudioBuffer {
     AudioStream* stream = nullptr;
-    uint8_t audio_buf [(MAX_AUDIO_FRAME_SIZE * 3) / 2] = {0};
+    uint8_t audio_buf[(MAX_AUDIO_FRAME_SIZE * 3) / 2] = { 0 };
     unsigned int audio_buf_size = 0;
     unsigned int audio_buf_index = 0;
 };
@@ -25,18 +25,21 @@ struct SDLAudioBuffer {
  * SDL's audio driver implementation
  */
 class SDLAudioDriver final : public AudioDriver {
-  public:
+public:
     SDLAudioDriver (
-        Application::ApplicationContext& applicationContext, Detectors::AudioPlayingDetector& detector,
-        Recorders::PlaybackRecorder& recorder);
+	Application::ApplicationContext& applicationContext, Detectors::AudioPlayingDetector& detector,
+	Recorders::PlaybackRecorder& recorder
+    );
     ~SDLAudioDriver () override;
 
     /** @inheritdoc */
-    void addStream (AudioStream* stream) override;
+    int addStream (AudioStream* stream) override;
+    /** @inheritdoc */
+    void removeStream (int streamId) override;
     /**
      * @return All the registered audio streams
      */
-    const std::vector<SDLAudioBuffer*>& getStreams ();
+    const std::map<int, SDLAudioBuffer*>& getStreams ();
 
     /** @inheritdoc */
     [[nodiscard]] AVSampleFormat getFormat () const override;
@@ -49,7 +52,13 @@ class SDLAudioDriver final : public AudioDriver {
      */
     [[nodiscard]] const SDL_AudioSpec& getSpec () const;
 
-  private:
+    [[nodiscard]] SDL_mutex* getStreamMutex () const;
+
+private:
+    /** The mutex lock used to access the stream list mutex */
+    SDL_mutex* m_streamListMutex;
+    /** The last streamID used */
+    int m_lastStreamID = 0;
     /** The device's ID */
     SDL_AudioDeviceID m_deviceID;
     /** If the driver is initialized or not */
@@ -57,6 +66,6 @@ class SDLAudioDriver final : public AudioDriver {
     /** The sound output configuration */
     SDL_AudioSpec m_audioSpec {};
     /** All the playable steams */
-    std::vector<SDLAudioBuffer*> m_streams {};
+    std::map<int, SDLAudioBuffer*> m_streams {};
 };
 } // namespace WallpaperEngine::Audio::Drivers

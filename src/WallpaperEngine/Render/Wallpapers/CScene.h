@@ -13,11 +13,13 @@ namespace WallpaperEngine::Render::Wallpapers {
 using namespace WallpaperEngine::Data::Model;
 
 class CScene final : public CWallpaper {
-  public:
+public:
     CScene (
-        const Wallpaper& wallpaper, RenderContext& context, AudioContext& audioContext,
-        const WallpaperState::TextureUVsScaling& scalingMode,
-        const uint32_t& clampMode);
+	const Wallpaper& wallpaper, RenderContext& context, AudioContext& audioContext,
+	const WallpaperState::TextureUVsScaling& scalingMode, const uint32_t& clampMode
+    );
+
+    ~CScene () override;
 
     [[nodiscard]] Camera& getCamera () const;
 
@@ -31,14 +33,15 @@ class CScene final : public CWallpaper {
     const glm::vec2* getParallaxDisplacement () const;
 
     [[nodiscard]] const std::vector<CObject*>& getObjectsByRenderOrder () const;
+    [[nodiscard]] const CObject* getObject (int id) const;
 
-  protected:
+protected:
     void renderFrame (const glm::ivec4& viewport) override;
     void updateMouse (const glm::ivec4& viewport);
 
     friend class CWallpaper;
 
-  private:
+private:
     Render::CObject* createObject (const Object& object);
     void addObjectToRenderOrder (const Object& object);
 

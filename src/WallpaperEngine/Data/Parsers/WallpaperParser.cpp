@@ -10,14 +10,14 @@ using namespace WallpaperEngine::Data::Parsers;
 
 WallpaperUniquePtr WallpaperParser::parse (const JSON& file, Project& project) {
     switch (project.type) {
-        case Project::Type_Scene:
-            return parseScene (file, project);
-        case Project::Type_Video:
-            return parseVideo (file, project);
-        case Project::Type_Web:
-            return parseWeb (file, project);
-        default:
-            sLog.exception ("Unexpected project type value found... This is likely a bug");
+	case Project::Type_Scene:
+	    return parseScene (file, project);
+	case Project::Type_Video:
+	    return parseVideo (file, project);
+	case Project::Type_Web:
+	    return parseWeb (file, project);
+	default:
+	    sLog.exception ("Unexpected project type value found... This is likely a bug");
     }
 }
 
@@ -25,7 +25,8 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
     const auto scene = JSON::parse (project.assetLocator->readString (file));
     const auto camera = scene.require ("camera", "Scenes must have a camera section");
     const auto general = scene.require ("general", "Scenes must have a general section");
-    const auto projection = general.require ("orthogonalprojection", "General section must have orthogonal projection info");
+    const auto projection
+	= general.require ("orthogonalprojection", "General section must have orthogonal projection info");
     const auto objects = scene.require ("objects", "Scenes must have an objects section");
     const auto& properties = project.properties;
 
@@ -70,7 +71,10 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
                 .projection = {
                     .width = projection.require <int> ("width", "Projection must have a width"),
                     .height = projection.require <int> ("height", "Projection must have a height"),
-                    .isAuto = projection.optional ("auto", false)
+                    .isAuto = projection.optional ("auto", false),
+                    .nearz = camera.optional <float> ("nearz", 0.0f),
+                    .farz = camera.optional <float> ("farz", 1000.0f),
+                    .fov = camera.optional <float> ("fov", 50.0f)
                 }
             },
             .objects = parseObjects (objects, project),
@@ -79,16 +83,13 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
 }
 
 VideoUniquePtr WallpaperParser::parseVideo (const JSON& file, Project& project) {
-    return std::make_unique <Video> (WallpaperData {
-        .filename = file,
-        .project = project
-    });
+    return std::make_unique<Video> (WallpaperData { .filename = file, .project = project });
 }
 
-WebUniquePtr  WallpaperParser::parseWeb (const JSON& file, Project& project) {
-    return std::make_unique <Web> (WallpaperData {
-        .filename = file,
-        .project = project,
+WebUniquePtr WallpaperParser::parseWeb (const JSON& file, Project& project) {
+    return std::make_unique<Web> (WallpaperData {
+	.filename = file,
+	.project = project,
     });
 }
 
@@ -96,7 +97,7 @@ ObjectList WallpaperParser::parseObjects (const JSON& objects, const Project& pr
     ObjectList result = {};
 
     for (const auto& cur : objects) {
-        result.emplace_back (ObjectParser::parse (cur, project));
+	result.emplace_back (ObjectParser::parse (cur, project));
     }
 
     return result;
